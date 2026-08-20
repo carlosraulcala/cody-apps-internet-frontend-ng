@@ -46,6 +46,10 @@ export class TaskService {
     );
   }
 
+  aiSuggest(prompt: string): Observable<{title: string, description: string}> {
+    return this.http.post<{title: string, description: string}>(`${this.apiUrl}/ai-suggest`, { prompt });
+  }
+
   generateAiTask(prompt: string): Observable<Task> {
     return this.http.post<Task>(`${this.apiUrl}/ai`, { prompt }).pipe(
       tap((newTask) => this._tasks.update(tasks => [...tasks, newTask]))
