@@ -1,0 +1,81 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card p-6">
+    <!-- Cabecera con Promedio y Botón -->
+    <div
+        class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+        <div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Reseñas y Opiniones</h3>
+            <div class="flex items-center gap-3 mt-1">
+                <p-rating [ngModel]="reviewService.averageRating()" [readonly]="true"></p-rating>
+                <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {{ reviewService.averageRating() }} / 5 ({{ reviewService.reviews().length }} opiniones)
+                </span>
+            </div>
+        </div>
+
+        <p-button label="Escribir Reseña" icon="pi pi-pencil" severity="primary" (onClick)="openNew()">
+        </p-button>
+    </div>
+
+    <!-- Lista de Reseñas -->
+    @if (reviewService.reviews().length === 0) {
+    <div class="text-center py-10 text-gray-500">
+        <i class="pi pi-comments text-5xl mb-3 block text-gray-400"></i>
+        <p class="text-base font-medium">Aún no hay reseñas para este producto.</p>
+        <p class="text-sm">¡Sé el primero en dejar una opinión!</p>
+    </div>
+    } @else {
+    <div class="space-y-4">
+        @for (rev of reviewService.reviews(); track rev.id) {
+        <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40">
+            <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center gap-3">
+                    <span
+                        class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xs">
+                        U{{ rev.user_id }}
+                    </span>
+                    <p-rating [ngModel]="rev.rating" [readonly]="true"></p-rating>
+                </div>
+
+                <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                    (onClick)="deleteReview(rev.id)">
+                </p-button>
+            </div>
+
+            <p class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                {{ rev.comment }}
+            </p>
+        </div>
+        }
+    </div>
+    }
+</div>
+
+<!-- Modal Nueva Reseña -->
+<p-dialog [(visible)]="reviewDialog" [style]="{ width: '450px' }" header="Escribir una Reseña" [modal]="true"
+    styleClass="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="field mb-4 mt-2">
+            <label class="block font-medium mb-2">Calificación</label>
+            <p-rating [(ngModel)]="newReview.rating"></p-rating>
+        </div>
+
+        <div class="field mb-2">
+            <label for="comment" class="block font-medium mb-1">Comentario</label>
+            <textarea id="comment" pTextarea [(ngModel)]="newReview.comment" rows="4" class="w-full"
+                placeholder="Cuéntanos tu experiencia con este producto...">
+      </textarea>
+            @if (submitted && !newReview.comment.trim()) {
+            <small class="text-red-500 block mt-1">El comentario es obligatorio.</small>
+            }
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancelar" icon="pi pi-times" [text]="true" severity="secondary"
+            (onClick)="hideDialog()"></p-button>
+        <p-button label="Publicar Reseña" icon="pi pi-check" (onClick)="saveReview()"></p-button>
+    </ng-template>
+</p-dialog>

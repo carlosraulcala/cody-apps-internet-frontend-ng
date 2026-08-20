@@ -13,8 +13,11 @@ export class CategoryService {
 
   loadCategories() {
     this.http.get<Category[]>(this.apiUrl).subscribe({
-      next: (data) => this._categories.set(data),
-      error: (err) => console.error('Error al cargar', err)
+      next: (data) => {
+        console.log('Categories loaded:', data);
+        this._categories.set(data);
+      },
+      error: (err) => console.error('Error al cargar categorías:', err)
     });
   }
   

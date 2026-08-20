@@ -1,0 +1,172 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card p-4">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Gestión de Productos</h2>
+    
+    <div class="flex items-center gap-3">
+      <!-- Filtro por Categoría -->
+      <p-select
+        [options]="categoryService.categories()"
+        [ngModel]="selectedCategoryId()"
+        (ngModelChange)="selectedCategoryId.set($event)"
+        optionLabel="title"
+        optionValue="id"
+        placeholder="Todas las categorías"
+        [showClear]="true"
+        styleClass="w-full md:w-56">
+      </p-select>
+
+      <!-- Botón para ir al Carrito con contador -->
+      <a routerLink="/cart">
+        <p-button 
+          icon="pi pi-shopping-cart" 
+          [label]="'Carrito (' + cartService.totalItems() + ')'" 
+          severity="secondary" 
+          [outlined]="true">
+        </p-button>
+      </a>
+
+      <!-- Botón Crear Producto -->
+      <p-button 
+        label="Nuevo Producto" 
+        icon="pi pi-plus" 
+        severity="success" 
+        (onClick)="openNew()">
+      </p-button>
+    </div>
+  </div>
+
+  <p-table [value]="filteredProducts()" [paginator]="true" [rows]="10" [tableStyle]="{ 'min-width': '50rem' }">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>ID</th>
+        <th>Título</th>
+        <th>Precio</th>
+        <th>Stock</th>
+        <th class="text-center">Acciones</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-prod>
+      <tr>
+        <td>{{ prod.id }}</td>
+        <td>{{ prod.title }}</td>
+        <td>{{ prod.price | currency:'USD':'symbol':'1.2-2' }}</td>
+        <td>
+          @if (prod.stock === 0) {
+            <p-tag value="Agotado" severity="danger"></p-tag>
+          } @else {
+            <span [class.text-red-500]="prod.stock < 5" class="font-medium">
+              {{ prod.stock }} unidades
+            </span>
+          }
+        </td>
+        <td class="text-center">
+          <div class="flex justify-center gap-1">
+            <!-- Botón Agregar al Carrito -->
+            <p-button 
+              icon="pi pi-cart-plus" 
+              [rounded]="true" 
+              [text]="true" 
+              severity="success" 
+              [disabled]="prod.stock === 0"
+              pTooltip="Agregar al carrito"
+              (onClick)="addToCart(prod)">
+            </p-button>
+
+            <!-- Botón Ver Reseñas -->
+            <p-button 
+              icon="pi pi-comments" 
+              [rounded]="true" 
+              [text]="true" 
+              severity="warn" 
+              pTooltip="Ver reseñas"
+              (onClick)="openReviews(prod)">
+            </p-button>
+
+            <!-- Botón Editar -->
+            <p-button 
+              icon="pi pi-pencil" 
+              [rounded]="true" 
+              [text]="true" 
+              severity="info" 
+              (onClick)="editProduct(prod)">
+            </p-button>
+
+            <!-- Botón Eliminar -->
+            <p-button 
+              icon="pi pi-trash" 
+              [rounded]="true" 
+              [text]="true" 
+              severity="danger" 
+              (onClick)="deleteProduct(prod)">
+            </p-button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Modal de Creación/Edición -->
+<p-dialog [(visible)]="productDialog" [style]="{ width: '450px' }" header="Detalles del Producto" [modal]="true" styleClass="p-fluid">
+  <ng-template pTemplate="content">
+    <div class="field mb-4 mt-2">
+      <label for="title" class="block font-medium mb-1">Título</label>
+      <input type="text" pInputText id="title" [(ngModel)]="product.title" required autofocus class="w-full" />
+      @if (submitted && !product.title) {
+        <small class="text-red-500 block mt-1">El título es requerido.</small>
+      }
+    </div>
+
+    <div class="field mb-4">
+      <label for="description" class="block font-medium mb-1">Descripción</label>
+      <input type="text" pInputText id="description" [(ngModel)]="product.description" class="w-full" />
+    </div>
+
+    <div class="field mb-4">
+      <label for="price" class="block font-medium mb-1">Precio</label>
+      <p-inputNumber id="price" [(ngModel)]="product.price" mode="currency" currency="USD" locale="en-US" class="w-full"></p-inputNumber>
+      @if (submitted && (product.price === undefined || product.price === null)) {
+        <small class="text-red-500 block mt-1">El precio es requerido.</small>
+      }
+    </div>
+
+    <div class="field mb-4">
+      <label for="stock" class="block font-medium mb-1">Stock</label>
+      <p-inputNumber id="stock" [(ngModel)]="product.stock" [min]="0" class="w-full"></p-inputNumber>
+    </div>
+
+    <div class="field mb-4">
+      <label for="category_id" class="block font-medium mb-1">Categoría</label>
+      <p-select 
+        [options]="categoryService.categories()" 
+        [(ngModel)]="product.category_id" 
+        optionLabel="title" 
+        optionValue="id" 
+        placeholder="Seleccione una categoría"
+        class="w-full">
+      </p-select>
+      @if (submitted && !product.category_id) {
+        <small class="text-red-500 block mt-1">La categoría es requerida.</small>
+      }
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" [text]="true" severity="secondary" (onClick)="hideDialog()"></p-button>
+    <p-button label="Guardar" icon="pi pi-check" [text]="true" (onClick)="saveProduct()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal de Reseñas del Producto -->
+<p-dialog 
+  [(visible)]="showReviewsDialog" 
+  [modal]="true" 
+  [style]="{ width: '650px' }" 
+  [header]="'Reseñas de: ' + (selectedProduct?.title ?? 'Producto')">
+  @if (selectedProduct?.id) {
+    <app-review-list [productId]="selectedProduct?.id"></app-review-list>
+  }
+</p-dialog>

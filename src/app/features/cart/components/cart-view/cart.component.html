@@ -1,0 +1,133 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card p-4">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Carrito de Compras</h2>
+      <p class="text-sm text-gray-500">Revisa y gestiona los artículos en tu carrito</p>
+    </div>
+
+    @if (cartService.cartDetails().length > 0) {
+      <p-button 
+        label="Vaciar Carrito" 
+        icon="pi pi-trash" 
+        severity="danger" 
+        [outlined]="true"
+        (onClick)="clearCart()">
+      </p-button>
+    }
+  </div>
+
+  @if (cartService.cartDetails().length === 0) {
+    <!-- Carrito Vacío -->
+    <div class="text-center py-16 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+      <i class="pi pi-shopping-cart text-6xl text-gray-400 mb-4 block"></i>
+      <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">Tu carrito está vacío</h3>
+      <p class="text-gray-500 mb-6">Aún no has agregado ningún producto a tu carrito.</p>
+      <a routerLink="/products">
+        <p-button label="Ver Catálogo de Productos" icon="pi pi-arrow-left" severity="primary"></p-button>
+      </a>
+    </div>
+  } @else {
+    <!-- Tabla y Resumen -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Tabla de Items -->
+      <div class="lg:col-span-2">
+        <p-table [value]="cartService.cartDetails()" [tableStyle]="{ 'min-width': '35rem' }">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Producto</th>
+              <th>Precio Unit.</th>
+              <th>Cantidad</th>
+              <th>Subtotal</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td>
+                <div class="font-medium text-gray-900 dark:text-white">
+                  {{ item.product?.title ?? ('Producto #' + item.product_id) }}
+                </div>
+                @if (item.product?.description) {
+                  <small class="text-gray-500 truncate block max-w-xs">{{ item.product.description }}</small>
+                }
+              </td>
+              <td>
+                {{ (item.product?.price ?? 0) | currency:'USD':'symbol':'1.2-2' }}
+              </td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <p-button 
+                    icon="pi pi-minus" 
+                    [rounded]="true" 
+                    [text]="true" 
+                    size="small"
+                    [disabled]="item.quantity <= 1"
+                    (onClick)="updateQuantity(item, item.quantity - 1)">
+                  </p-button>
+                  <span class="font-bold w-6 text-center">{{ item.quantity }}</span>
+                  <p-button 
+                    icon="pi pi-plus" 
+                    [rounded]="true" 
+                    [text]="true" 
+                    size="small"
+                    (onClick)="updateQuantity(item, item.quantity + 1)">
+                  </p-button>
+                </div>
+              </td>
+              <td class="font-semibold text-gray-800 dark:text-white">
+                {{ item.subtotal | currency:'USD':'symbol':'1.2-2' }}
+              </td>
+              <td class="text-center">
+                <p-button 
+                  icon="pi pi-trash" 
+                  [rounded]="true" 
+                  [text]="true" 
+                  severity="danger" 
+                  (onClick)="removeItem(item)">
+                </p-button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <!-- Resumen del Pedido -->
+      <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700 h-fit">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Resumen de la Orden</h3>
+        
+        <div class="space-y-3 mb-6">
+          <div class="flex justify-between text-gray-600 dark:text-gray-300">
+            <span>Total Unidades:</span>
+            <span class="font-medium">{{ cartService.totalItems() }}</span>
+          </div>
+          <div class="flex justify-between text-gray-600 dark:text-gray-300">
+            <span>Subtotal:</span>
+            <span class="font-medium">{{ cartService.totalPrice() | currency:'USD':'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between text-gray-600 dark:text-gray-300">
+            <span>Envío:</span>
+            <span class="text-green-600 font-medium">Gratis</span>
+          </div>
+          <hr class="border-gray-200 dark:border-gray-700 my-2" />
+          <div class="flex justify-between text-xl font-bold text-gray-900 dark:text-white">
+            <span>Total:</span>
+            <span class="text-primary-600">{{ cartService.totalPrice() | currency:'USD':'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <p-button 
+          label="Proceder al Pago" 
+          icon="pi pi-credit-card" 
+          severity="success" 
+          styleClass="w-full"
+          (onClick)="checkout()">
+        </p-button>
+      </div>
+
+    </div>
+  }
+</div>
