@@ -66,14 +66,19 @@ export class TasksComponent implements OnInit {
 
   generateAiTask() {
     if (!this.aiPrompt.trim()) return;
-    
-    // Al usar .subscribe(), el servicio hace la petición y por detrás actualiza el Signal
-    this.taskService.generateAiTask(this.aiPrompt).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Tarea generada por IA', life: 3000 });
+
+    this.taskService.aiSuggest(this.aiPrompt).subscribe({
+      next: (suggestion) => {
+        this.task = {
+          title: suggestion.title,
+          description: suggestion.description,
+          completed: false
+        };
+        this.taskDialog = true;
         this.aiDialog = false;
+        this.messageService.add({ severity: 'info', summary: 'Sugerencia', detail: 'La IA ha sugerido una tarea. Por favor, revísala antes de guardar.', life: 3000 });
       },
-      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al generar la tarea con IA', life: 3000 })
+      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al obtener sugerencia de la IA', life: 3000 })
     });
   }
 
